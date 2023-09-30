@@ -1,4 +1,5 @@
 "use client";
+import { uploadToStorj } from "@/storj";
 import { Inbox } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
@@ -6,8 +7,20 @@ const FileUpload = () => {
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "application/pdf": [".pdf"] },
     maxFiles: 1,
-    onDrop: (acceptedFile) => {
+    onDrop: async (acceptedFile) => {
       console.log(acceptedFile);
+      const file = acceptedFile[0];
+      if (file.size > 10 * 1024 * 1024) {
+        alert("Please upload a smaller file");
+        return;
+      }
+
+      try {
+        const data = await uploadToStorj(file);
+        console.log("data:", data);
+      } catch (error) {
+        console.log(error);
+      }
     },
   });
 
