@@ -1,15 +1,15 @@
 import S3 from "aws-sdk/clients/s3";
 
 const s3 = new S3({
-  accessKeyId: process.env.NEXT_PUBLIC_STORJ_ACCESS_KEY,
-  secretAccessKey: process.env.NEXT_PUBLIC_STROJ_SECRET_ACCESS_KEY,
+  accessKeyId: process.env.NEXT_PUBLIC_STORJ_ACCESS_KEY2,
+  secretAccessKey: process.env.NEXT_PUBLIC_STROJ_SECRET_ACCESS_KEY2,
   endpoint: process.env.NEXT_PUBLIC_STORJ_ENDPOINT,
   s3ForcePathStyle: true,
   signatureVersion: "v4",
   httpOptions: { timeout: 0 },
 });
 
-export const uploadToStorj = async (file: File) => {  
+export const uploadToStorj = async (file: File) => {
   try {
     const file_key =
       "uploads/" + Date.now().toString() + file.name.replace(" ", "-");
@@ -21,7 +21,7 @@ export const uploadToStorj = async (file: File) => {
     };
 
     await s3
-      .upload(params)
+      .putObject(params)
       .on("httpUploadProgress", (e) => {
         console.log(
           "uploading to storj... ",
