@@ -12,7 +12,7 @@ const s3 = new S3({
 export const uploadToStorj = async (file: File) => {
   try {
     const file_key =
-      "uploads/" + Date.now().toString() + file.name.replace(" ", "-");
+      "uploads/" + Date.now().toString() + file.name.replaceAll(" ", "-");
 
     const params = {
       Bucket: process.env.NEXT_PUBLIC_STORJ_BUCKET_NAME!,
@@ -47,6 +47,6 @@ export const getStorjUrl = (file_key: string) => {
     Bucket: process.env.NEXT_PUBLIC_STORJ_BUCKET_NAME!,
     Key: file_key,
   };
-
   const url = s3.getSignedUrl("getObject", params);
+  return url;
 };
