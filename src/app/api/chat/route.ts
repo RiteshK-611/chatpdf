@@ -3,7 +3,7 @@ import { Message, OpenAIStream, StreamingTextResponse } from "ai";
 import { getContext } from "@/lib/context";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { chats } from "@/lib/db/schema";
+import { chats, messages as _messages } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
 const configuration = new Configuration({
@@ -29,8 +29,8 @@ export const POST = async (req: Request) => {
     const context = await getContext(lastMessage.content, fileKey);
 
     const prompt = {
-        role: "system",
-        content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
+      role: "system",
+      content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
         The traits of AI include expert knowledge, helpfulness, cleverness, and articulateness.
         AI is a well-behaved and well-mannered individual.
         AI is always friendly, kind, and inspiring, and he is eager to provide vivid and thoughtful responses to the user.
@@ -44,7 +44,7 @@ export const POST = async (req: Request) => {
         AI assistant will not apologize for previous responses, but instead will indicated new information was gained.
         AI assistant will not invent anything that is not drawn directly from the context.
         `,
-      };
+    };
 
     // Ask OpenAI for a streaming chat completion given the prompt
     const response = await openai.createChatCompletion({
@@ -52,11 +52,28 @@ export const POST = async (req: Request) => {
       stream: true,
       messages: [
         prompt,
-        ...messages.filter((message: Message) => message.role === "user")
+        ...messages.filter((message: Message) => message.role === "user"),
       ],
     });
     // Convert the response into a friendly text-stream
-    const stream = OpenAIStream(response);
+    const stream = OpenAIStream(response, {
+      onStart: async () => {
+        // save user messages into db
+        await db.insert(_messages).values({
+          chatId,
+          content: lastMessage.content,
+          role: "user",
+        });
+      },
+      onCompletion: async (completion) => {
+        // save ai messages into db
+        await db.insert(_messages).values({
+          chatId,
+          content: completion,
+          role: "system",
+        });
+      },
+    });
     // Respond with the stream
     return new StreamingTextResponse(stream);
   } catch (error) {}
