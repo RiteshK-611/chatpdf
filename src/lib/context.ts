@@ -29,7 +29,7 @@ export const getMatchesFromEmbeddings = async (
 };
 
 export const getContext = async (query: string, fileKey: string) => {
-  const queryEmbeddings = await getEmbeddings(fileKey);
+  const queryEmbeddings = await getEmbeddings(query);
   const matches = await getMatchesFromEmbeddings(queryEmbeddings, fileKey);
 
   const qualifyingDocs = matches.filter(
