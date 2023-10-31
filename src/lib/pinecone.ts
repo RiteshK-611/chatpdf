@@ -1,6 +1,7 @@
 import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
 import { downlondFromStorj } from "./storj-server";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
+import { PineconeStore } from "langchain/vectorstores/pinecone";
 import {
   Document,
   RecursiveCharacterTextSplitter,
@@ -37,21 +38,22 @@ export const loadPDFIntoPinecone = async (file_key: string) => {
   // const documents = await Promise.all(pages.map(page => prepareDocuments(page)));
   const documents = await Promise.all(pages.map(prepareDocuments));
 
+  console.log("Documents: " + documents)
+
   // 3. vectorize and embed individual documents
   const vectors = await Promise.all(documents.flat().map(embedDocument));
 
-  const pinecone = new Pinecone({
-    apiKey: process.env.PINECONE_API_KEY!,
-    environment: process.env.PINECONE_ENVIRONMENT!,
-  });
+  console.log("Vectors: " + vectors)
 
   // 4. upload to pinecone
   const pineconeIndex = pinecone.index("chatpdf");
-  const namespace = pineconeIndex.namespace(convertToAscii(file_key));
+  // const namespace = pineconeIndex.namespace(convertToAscii(file_key));
+
+  // await PineconeStore.fromDocuments(documents)
 
   console.log("inserting vectors into pinecone");
-  // await pineconeIndex.upsert(vectors);
-  await namespace.upsert(vectors);
+  await pineconeIndex.upsert(vectors);
+  // await namespace.upsert(vectors);
 
   return documents[0];
 };

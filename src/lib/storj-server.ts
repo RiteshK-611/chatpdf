@@ -1,5 +1,6 @@
 import S3 from "aws-sdk/clients/s3";
 import fs from "fs";
+import os from "os";
 
 export const downlondFromStorj = async (file_key: string): Promise<string> => {
   return new Promise(async (resolve, reject) => {
@@ -19,7 +20,14 @@ export const downlondFromStorj = async (file_key: string): Promise<string> => {
       console.log("File Key: ", file_key);
 
       const obj = await s3.getObject(params).promise();
-      const file_name = `./tmp/pdf-${Date.now()}.pdf`;
+      let file_name: string;
+      if (os.platform() === "win32") {
+        file_name = `C:\\Users\\${
+          os.userInfo().username
+        }\\AppData\\Local\\Temp\\pdf-${Date.now()}.pdf`;
+      } else {
+        file_name = `/tmp/pdf-${Date.now()}.pdf`;
+      }
 
       if (obj.Body instanceof require("stream").Readable) {
         console.log("----------Readable----------");
@@ -35,7 +43,7 @@ export const downlondFromStorj = async (file_key: string): Promise<string> => {
         console.log("----------Buffer----------");
         fs.writeFileSync(file_name, obj.Body as Buffer);
         console.log("\nFileNamw: " + file_name);
-        console.log("\nBuffer: " + obj.Body);
+        // console.log("\nBuffer: " + obj.Body);
         return resolve(file_name);
       }
     } catch (error) {
