@@ -14,8 +14,7 @@ export const getMatchesFromEmbeddings = async (
   const index = await pinecone.Index("chatpdf");
 
   try {
-    const namespace = convertToAscii(fileKey);
-    const queryResponse = await index.namespace(namespace).query({
+    const queryResponse = await index.query({
       topK: 5,
       vector: embeddings,
       includeMetadata: true,
