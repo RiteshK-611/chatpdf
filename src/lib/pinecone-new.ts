@@ -9,7 +9,7 @@ import md5 from "md5";
 
 dotnev.config();
 
-export const loadPDFIntoPinecone = async (file_key: string) => {
+export const embedAndStorePDF = async (file_key: string) => {
   // 1. obtain the pdf -> download and read from pdf
   console.log("downloading pdf into file system...");
   const file_name = await downlondFromStorj(file_key);
@@ -22,36 +22,33 @@ export const loadPDFIntoPinecone = async (file_key: string) => {
 
   const docs = await loader.load();
 
-  console.log("Splitteing docs.................");
+  console.log("Splitteing PDF");
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 1000,
     chunkOverlap: 200,
   });
-
   const splittedDocs = await splitter.splitDocuments(docs);
-
   const pageContents = splittedDocs.map((doc) => doc.pageContent);
 
-  console.log("Calling Embedding documents----------");
-  const vectors = await getEmbeddings(pageContents, file_name);
+  const vectors = await embedPDF(pageContents, file_name);
 
-  StoreDocs(vectors);
+  storePDF(vectors);
 };
 
-export const getEmbeddings = async (texts: string[], file_name: string) => {
+export const embedPDF = async (texts: string[], file_name: string) => {
   try {
     console.log("Init Cohere");
     const cohere = new CohereClient({
       token: process.env.COHERE_API_KEY!,
     });
 
-    console.log("Embedding docs-----");
+    console.log("Embedding PDF");
     const vectors = await cohere.embed({
       texts,
       model: "embed-multilingual-v2.0",
     });
 
-    console.log("Creating DocsVec.........");
+    console.log("Creating PDF Docs Vectors");
     const docsVec = vectors.embeddings.map((embedding, index) => {
       const hash = md5(embedding);
       return {
@@ -64,22 +61,19 @@ export const getEmbeddings = async (texts: string[], file_name: string) => {
       } as PineconeRecord;
     });
 
-    if (docsVec) {
-      return docsVec
-    } else {
-      return Promise.resolve(); // This will return a resolved Promise when your condition is not met
-    }
+    return docsVec;
   } catch (error) {
     console.log("Error Embedding text with Cohere");
+    throw error;
   }
 };
 
-const StoreDocs = async (vectors: PineconeRecord[]) => {
+const storePDF = async (vectors: PineconeRecord[]) => {
   try {
     console.log("Init Pinecone");
     const pinecone = new Pinecone();
     const index = pinecone.Index("chatpdf-cohere");
-    console.log("Calling PineconeStore-----------");
+    console.log("Upserting into Pinecone");
     await index?.upsert(vectors);
   } catch (error) {
     console.log("error", error);
