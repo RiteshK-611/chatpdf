@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { chats } from "@/lib/db/schema";
 import { loadPDFIntoPinecone } from "@/lib/pinecone";
-import { getDocsFromPDF } from "@/lib/pinecone-new";
+import { embedAndStorePDF } from "@/lib/pinecone-new";
 import { getStorjUrl } from "@/lib/storj";
 import { auth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
@@ -17,7 +17,7 @@ export const POST = async (req: Request, res: Response) => {
     const body = await req.json();
     const { file_key, file_name } = body;
     // await loadPDFIntoPinecone(file_key);
-    await getDocsFromPDF(file_key)
+    await embedAndStorePDF(file_key);
     const chat_id = await db
       .insert(chats)
       .values({

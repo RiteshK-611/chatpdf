@@ -38,12 +38,12 @@ export const loadPDFIntoPinecone = async (file_key: string) => {
   // const documents = await Promise.all(pages.map(page => prepareDocuments(page)));
   const documents = await Promise.all(pages.map(prepareDocuments));
 
-  console.log("Documents: " + documents)
+  console.log("Documents: " + documents);
 
   // 3. vectorize and embed individual documents
   const vectors = await Promise.all(documents.flat().map(embedDocument));
 
-  console.log("Vectors: " + vectors)
+  console.log("Vectors: " + vectors);
 
   // 4. upload to pinecone
   const pineconeIndex = pinecone.index("chatpdf");
@@ -60,12 +60,12 @@ export const loadPDFIntoPinecone = async (file_key: string) => {
 
 const embedDocument = async (doc: Document) => {
   try {
-    const embedding = await getEmbeddings(doc.pageContent);
-    const hash = md5(embedding);
+    const embedding = await getEmbeddings([doc.pageContent]);
+    const hash = md5(embedding[0]);
 
     return {
       id: hash,
-      values: embedding,
+      values: embedding[0],
       metadata: {
         text: doc.metadata.text,
         pageNumber: doc.metadata.pageNumber,
