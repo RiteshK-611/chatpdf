@@ -1,22 +1,20 @@
 import { Configuration, OpenAIApi } from "openai-edge";
-import { CohereEmbeddings } from "langchain/embeddings/cohere";
 import { CohereClient } from "cohere-ai";
 
-const cohere = new CohereEmbeddings({
-  apiKey: "BJ100bNW6QTZ8XSSVQTajZY36jng5HjbZ1eJu2Yc",
-  modelName: "embed-english-light-v2.0",
-});
-
-const coheres = new CohereClient({
-  token: "BJ100bNW6QTZ8XSSVQTajZY36jng5HjbZ1eJu2Yc",
-});
-
-export const getEmbeddings = async (text: string) => {
+export const getEmbeddings = async (texts: string[]) => {
   try {
-    console.log("\nCohere: ", process.env.COHERE_API_KEY);
-    const response = await cohere.embedQuery("Hello world");
-    console.log("got the response");
-    return response;
+    console.log("Init Cohere");
+    const cohere = new CohereClient({
+      token: process.env.COHERE_API_KEY!,
+    });
+
+    console.log("Creating Embeddings");
+    const vectors = await cohere.embed({
+      texts,
+      model: "embed-multilingual-v2.0",
+    });
+
+    return vectors.embeddings;
   } catch (error) {
     console.log("error calling cohere embedding api", error);
     throw error;

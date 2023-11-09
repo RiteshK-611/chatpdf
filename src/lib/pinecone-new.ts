@@ -2,10 +2,9 @@ import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { downlondFromStorj } from "./storj-server";
 import * as dotnev from "dotenv";
-import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
-import { CohereClient } from "cohere-ai";
 import md5 from "md5";
+import { getEmbeddings } from "./embedding";
 
 dotnev.config();
 
@@ -30,33 +29,24 @@ export const embedAndStorePDF = async (file_key: string) => {
   const splittedDocs = await splitter.splitDocuments(docs);
   const pageContents = splittedDocs.map((doc) => doc.pageContent);
 
-  const vectors = await embedPDF(pageContents, file_name);
+  const vectors = await embedPDF(pageContents, file_key);
 
   storePDF(vectors);
 };
 
-export const embedPDF = async (texts: string[], file_name: string) => {
+export const embedPDF = async (texts: string[], file_key: string) => {
   try {
-    console.log("Init Cohere");
-    const cohere = new CohereClient({
-      token: process.env.COHERE_API_KEY!,
-    });
-
-    console.log("Embedding PDF");
-    const vectors = await cohere.embed({
-      texts,
-      model: "embed-multilingual-v2.0",
-    });
+    const embeddings = await getEmbeddings(texts);
 
     console.log("Creating PDF Docs Vectors");
-    const docsVec = vectors.embeddings.map((embedding, index) => {
+    const docsVec = embeddings.map((embedding, index) => {
       const hash = md5(embedding);
       return {
         id: hash,
         values: embedding,
         metadata: {
           text: texts[index],
-          pdfName: file_name,
+          pdfKey: file_key,
         },
       } as PineconeRecord;
     });
@@ -73,6 +63,7 @@ const storePDF = async (vectors: PineconeRecord[]) => {
     console.log("Init Pinecone");
     const pinecone = new Pinecone();
     const index = pinecone.Index("chatpdf-cohere");
+
     console.log("Upserting into Pinecone");
     await index?.upsert(vectors);
   } catch (error) {
