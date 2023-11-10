@@ -2,7 +2,6 @@
 
 import { db } from "@/lib/db";
 import { chats } from "@/lib/db/schema";
-import { loadPDFIntoPinecone } from "@/lib/pinecone";
 import { embedAndStorePDF } from "@/lib/pinecone-new";
 import { getStorjUrl } from "@/lib/storj";
 import { auth } from "@clerk/nextjs";

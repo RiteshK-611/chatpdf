@@ -11,34 +11,38 @@ import axios from "axios";
 type Props = { chatId: number };
 
 const ChatComponent = ({ chatId }: Props) => {
-  const {data, isLoading} = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["chat", chatId],
     queryFn: async () => {
-      const response = await axios.post<Message[]>("/api/get-messages", {chatId})
-      return response.data
-    }
-  })
+      const response = await axios.post<Message[]>("/api/get-messages", {
+        chatId,
+      });
+      return response.data;
+    },
+  });
 
   const { messages, input, handleInputChange, handleSubmit } = useChat({
     api: "/api/chat",
     body: {
-      chatId
+      chatId,
     },
-    initialMessages: data || []
+    initialMessages: data || [],
   });
 
   useEffect(() => {
-    const messageContainer = document.getElementById("message-container")
-    if(messageContainer) {
+    const messageContainer = document.getElementById("message-container");
+    if (messageContainer) {
       messageContainer.scrollTo({
         top: messageContainer.scrollHeight,
-        behavior: "smooth"
-      })
+        behavior: "smooth",
+      });
     }
-  })
+  });
 
   return (
-    <div className="relative max-h-screen overflow-scroll" id="message-container">
+    <div
+      className="relative max-h-screen overflow-scroll"
+      id="message-container">
       {/* header */}
       <div className="sticky top-0 inset-x-0 p-2 bg-white h-fit">
         <h3 className="text-xl font-bold">Chat</h3>
@@ -50,15 +54,17 @@ const ChatComponent = ({ chatId }: Props) => {
       <form
         onSubmit={handleSubmit}
         className="sticky bottom-0 inset-x-0 px-2 py-4 bg-white">
-        <Input
-          value={input}
-          onChange={handleInputChange}
-          className="w-full"
-          placeholder="Ask any question..."
-        />
-        <Button className="bg-blue-600 ml-2">
-          <Send className="w-4 h-4" />
-        </Button>
+        <div className="flex">
+          <Input
+            value={input}
+            onChange={handleInputChange}
+            className="w-full"
+            placeholder="Ask any question..."
+          />
+          <Button className="bg-blue-600 ml-2">
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
       </form>
     </div>
   );
