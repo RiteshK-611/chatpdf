@@ -1,7 +1,6 @@
 import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
 import { downlondFromStorj } from "./storj-server";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
-import { PineconeStore } from "langchain/vectorstores/pinecone";
 import {
   Document,
   RecursiveCharacterTextSplitter,
