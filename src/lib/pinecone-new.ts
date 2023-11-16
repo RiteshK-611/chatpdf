@@ -1,12 +1,9 @@
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { downlondFromStorj } from "./storj-server";
-import * as dotnev from "dotenv";
 import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
 import md5 from "md5";
 import { getEmbeddings } from "./embedding";
-
-dotnev.config();
 
 export const embedAndStorePDF = async (file_key: string) => {
   // 1. obtain the pdf -> download and read from pdf
@@ -61,7 +58,10 @@ export const embedPDF = async (texts: string[], file_key: string) => {
 const storePDF = async (vectors: PineconeRecord[]) => {
   try {
     console.log("Init Pinecone");
-    const pinecone = new Pinecone();
+    const pinecone = new Pinecone({
+      apiKey: process.env.PINECONE_API_KEY!,
+      environment: process.env.PINECONE_ENVIRONMENT!,
+    });
     const index = pinecone.Index("chatpdf-cohere");
 
     console.log("Upserting into Pinecone");
