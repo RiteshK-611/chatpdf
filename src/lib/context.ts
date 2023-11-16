@@ -1,14 +1,14 @@
 import { Pinecone } from "@pinecone-database/pinecone";
 import { getEmbeddings } from "./embedding";
-import * as dotnev from "dotenv";
-
-dotnev.config();
 
 export const getMatchesFromEmbeddings = async (
   embeddings: number[],
   fileKey: string
 ) => {
-  const pinecone = new Pinecone();
+  const pinecone = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY!,
+    environment: process.env.PINECONE_ENVIRONMENT!,
+  });
   const index = pinecone.Index("chatpdf-cohere");
 
   try {
