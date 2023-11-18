@@ -1,6 +1,10 @@
 import { Configuration, OpenAIApi } from "openai-edge";
 import { CohereClient } from "cohere-ai";
+import { TextServiceClient } from "@google-ai/generativelanguage";
+import { GoogleAuth } from "google-auth-library";
+import { GooglePaLMEmbeddings } from "langchain/embeddings/googlepalm";
 
+// Cohere
 export const getEmbeddings = async (texts: string[]) => {
   try {
     console.log("Init Cohere");
@@ -17,6 +21,26 @@ export const getEmbeddings = async (texts: string[]) => {
     return vectors.embeddings;
   } catch (error) {
     console.log("error calling cohere embedding api", error);
+    throw error;
+  }
+};
+
+// Google PaLM
+export const getEmbeddings2 = async (texts: string[]) => {
+  try {
+    console.log("Init PaLM");
+    const model = new GooglePaLMEmbeddings({
+      apiKey: process.env.GOOGLE_PALM_API_KEY,
+      modelName: "models/embedding-gecko-001",
+    });
+
+    console.log("Creating PaLM Embeddings");
+    const vectors = await model.embedDocuments(texts);
+    console.log("Vectors from PaLM: ", vectors);
+
+    return vectors;
+  } catch (error) {
+    console.log("error calling palm embedding api", error);
     throw error;
   }
 };

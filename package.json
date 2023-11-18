@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^4.24.2",
+    "@google-ai/generativelanguage": "^0.2.1",
     "@neondatabase/serverless": "^0.6.0",
     "@pinecone-database/doc-splitter": "^0.0.1",
     "@pinecone-database/pinecone": "^1.1.0",
@@ -26,6 +27,7 @@
     "dotenv": "^16.3.1",
     "drizzle-kit": "^0.19.13",
     "drizzle-orm": "^0.28.6",
+    "google-auth-library": "^8.9.0",
     "langchain": "^0.0.180",
     "lucide-react": "^0.279.0",
     "next": "latest",
