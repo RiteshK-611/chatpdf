@@ -1,7 +1,5 @@
 import { Configuration, OpenAIApi } from "openai-edge";
 import { CohereClient } from "cohere-ai";
-import { TextServiceClient } from "@google-ai/generativelanguage";
-import { GoogleAuth } from "google-auth-library";
 import { GooglePaLMEmbeddings } from "langchain/embeddings/googlepalm";
 
 // Cohere
