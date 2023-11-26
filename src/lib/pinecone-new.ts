@@ -47,6 +47,7 @@ export const embedPDF = async (texts: string[], file_key: string) => {
         },
       } as PineconeRecord;
     });
+    console.log(embeddings.length, "Embeddings created");
 
     return docsVec;
   } catch (error) {
@@ -66,6 +67,7 @@ const storePDF = async (vectors: PineconeRecord[]) => {
 
     console.log("Upserting into Pinecone");
     await index?.upsert(vectors);
+    console.log("Done!!")
   } catch (error) {
     console.log("error", error);
     throw error;
