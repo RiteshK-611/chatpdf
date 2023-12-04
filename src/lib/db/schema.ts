@@ -1,5 +1,4 @@
 import {
-  bigserial,
   integer,
   pgEnum,
   pgTable,
@@ -23,7 +22,7 @@ export const chats = pgTable("chats", {
 export type DrizzleChat = typeof chats.$inferSelect;
 
 export const messages = pgTable("messages", {
-  id: serial("id").notNull(),
+  id: serial("id").primaryKey(),
   chatId: integer("chat_id")
     .references(() => chats.id)
     .notNull(),
@@ -44,3 +43,6 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   stripePriceId: varchar("stripe_price_id", { length: 256 }),
   stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
 });
+
+// drizzle-orm
+// drizzle-kit
