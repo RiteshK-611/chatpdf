@@ -33,15 +33,15 @@ export const messages = pgTable("messages", {
 
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_Id", { length: 256 }).notNull().unique(),
-  stripeCustomerId: varchar("stripe_cutomer_id", { length: 256 })
+  userId: varchar("user_id", { length: 256 }).notNull().unique(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 256 })
     .notNull()
     .unique(),
   stripeSubscriptionId: varchar("stripe_subscription_id", {
     length: 256,
   }).unique(),
   stripePriceId: varchar("stripe_price_id", { length: 256 }),
-  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
+  stripeCurrentPeriodEnd: timestamp("stripe_current_period_ended_at"),
 });
 
 // drizzle-orm
