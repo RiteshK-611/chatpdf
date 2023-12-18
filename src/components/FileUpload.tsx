@@ -1,5 +1,5 @@
 "use client";
-import { uploadToStorj } from "@/lib/storj";
+import { uploadToStorj } from "@/lib/s3";
 import { useMutation } from "@tanstack/react-query";
 import { Inbox, Loader2 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
