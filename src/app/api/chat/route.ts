@@ -81,169 +81,36 @@
 // };
 //#endregion
 
-// #region Route1
-// import { NextRequest, NextResponse } from "next/server";
-// import {
-//   Message as VercelChatMessage,
-//   StreamingTextResponse,
-//   LangChainStream,
-// } from "ai";
-// import { ChatGooglePaLM } from "langchain/chat_models/googlepalm";
-// import { BytesOutputParser } from "langchain/schema/output_parser";
-// import { PromptTemplate } from "langchain/prompts";
-// import { chats, messages as _messages } from "@/lib/db/schema";
-// import { db } from "@/lib/db";
-
-// export const runtime = "edge";
-
-// /**
-//  * Basic memory formatter that stringifies and passes
-//  * message history directly into the model.
-//  */
-// const formatMessage = (message: VercelChatMessage) => {
-//   return `${message.role}: ${message.content}`;
-// };
-
-// const TEMPLATE = `You are a pirate named Patchy. All responses must be extremely verbose and in pirate dialect.
+import { HfInference } from '@huggingface/inference';
+import { HuggingFaceStream, StreamingTextResponse } from 'ai';
+import { experimental_buildOpenAssistantPrompt } from 'ai/prompts';
  
-// Current conversation:
-// {chat_history}
+// Create a new HuggingFace Inference instance
+const Hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
  
-// User: {input}
-// AI:`;
-
-// /*
-//  * This handler initializes and calls a simple chain with a prompt,
-//  * chat model, and output parser. See the docs for more information:
-//  *
-//  * https://js.langchain.com/docs/guides/expression_language/cookbook#prompttemplate--llm--outputparser
-//  */
-// export async function POST(req: NextRequest) {
-//   try {
-//     // Extract the `messages` from the body of the request
-//     const { messages, chatId } = await req.json();
-//     const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
-//     const currentMessageContent = messages[messages.length - 1].content;
-
-//     const prompt = PromptTemplate.fromTemplate(TEMPLATE);
-//     /**
-//      * See a full list of supported models at:
-//      * https://js.langchain.com/docs/modules/model_io/models/
-//      */
-//     //   const model = new ChatOpenAI({
-//     //     temperature: 0.8,
-//     //   });
-//     const model = new ChatGooglePaLM({
-//       apiKey: process.env.GOOGLE_PALM_API_KEY,
-//       temperature: 0.3,
-//     });
-
-//     /**
-//      * Chat models stream message chunks rather than bytes, so this
-//      * output parser handles serialization and encoding.
-//      */
-//     const outputParser = new BytesOutputParser();
-
-//     /*
-//      * Can also initialize as:
-//      *
-//      * import { RunnableSequence } from "langchain/schema/runnable";
-//      * const chain = RunnableSequence.from([prompt, model, outputParser]);
-//      */
-//     const chain = prompt.pipe(model).pipe(outputParser);
-
-//     const stream = await chain.stream({
-//       chat_history: formattedPreviousMessages.join("\n"),
-//       input: currentMessageContent,
-//     });
-
-//     LangChainStream({
-//       onStart: async () => {
-//         // save user messages into db
-//         await db.insert(_messages).values({
-//           chatId,
-//           content: currentMessageContent,
-//           role: "user",
-//         });
-//       },
-//       onCompletion: async (completion) => {
-//         // save ai messages into db
-//         await db.insert(_messages).values({
-//           chatId,
-//           content: completion,
-//           role: "system",
-//         });
-//       },
-//     });
-
-//     return new StreamingTextResponse(stream);
-//   } catch (e: any) {
-//     return NextResponse.json({ error: e.message }, { status: 500 });
-//   }
-// }
-// #endregion
-
-// #region Route2
-import { LangChainStream, StreamingTextResponse } from "ai";
-import { ChatGooglePaLM } from "langchain/chat_models/googlepalm";
-import { HumanMessage, SystemMessage } from "langchain/schema";
-import { NextResponse } from "next/server";
-import { chats, messages as _messages } from "@/lib/db/schema";
-import { db } from "@/lib/db";
-import { eq } from "drizzle-orm";
-import { getContext } from "@/lib/context";
-
-export const runtime = "edge";
-
+// IMPORTANT! Set the runtime to edge
+export const runtime = 'edge';
+ 
 export async function POST(req: Request) {
-  try {
-    const { messages, chatId } = await req.json();
-    const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
-    if (_chats.length != 1) {
-      return NextResponse.json({ error: "chat not found" }, { status: 404 });
-    }
-
-    const fileKey = _chats[0].fileKey;
-    const lastMessage = messages[messages.length - 1];
-    const context = await getContext(lastMessage.content, fileKey);
-
-    const { stream, handlers, writer } = LangChainStream({
-      onStart: async () => {
-        // save user messages into db
-        console.log("Inside OnStart Function");
-        await db.insert(_messages).values({
-          chatId,
-          content: lastMessage.content,
-          role: "user",
-        });
-      },
-      onCompletion: async (completion) => {
-        // save ai messages into db
-        console.log("Inside OnCompletion Function");
-        await db.insert(_messages).values({
-          chatId,
-          content: completion,
-          role: "system",
-        });
-      },
-    });
-
-    const model = new ChatGooglePaLM({
-      apiKey: process.env.GOOGLE_PALM_API_KEY,
-      temperature: 0.3,
-    });
-
-    // ask questions
-    const questions = [
-      new SystemMessage(context),
-      new HumanMessage(lastMessage.content),
-    ];
-
-    await model.call(questions, {}, [handlers]).catch(console.error);
-
-    return new StreamingTextResponse(stream);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
-  }
+  // Extract the `messages` from the body of the request
+  const { messages } = await req.json();
+ 
+  const response = Hf.textGenerationStream({
+    model: 'OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5',
+    inputs: experimental_buildOpenAssistantPrompt(messages),
+    parameters: {
+      max_new_tokens: 200,
+      // @ts-ignore (this is a valid parameter specifically in OpenAssistant models)
+      typical_p: 0.2,
+      repetition_penalty: 1,
+      truncate: 1000,
+      return_full_text: false,
+    },
+  });
+ 
+  // Convert the response into a friendly text-stream
+  const stream = HuggingFaceStream(response);
+ 
+  // Respond with the stream
+  return new StreamingTextResponse(stream);
 }
-// #endregion

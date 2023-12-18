@@ -1,5 +1,5 @@
 import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
-import { downlondFromStorj } from "./storj-server";
+import { downlondFromStorj } from "./s3-server";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import {
   Document,

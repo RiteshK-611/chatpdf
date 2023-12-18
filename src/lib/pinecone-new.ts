@@ -1,6 +1,6 @@
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { downlondFromStorj } from "./storj-server";
+import { downlondFromStorj } from "./s3-server";
 import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
 import md5 from "md5";
 import { getEmbeddings } from "./embedding";
@@ -67,7 +67,7 @@ const storePDF = async (vectors: PineconeRecord[]) => {
 
     console.log("Upserting into Pinecone");
     await index?.upsert(vectors);
-    console.log("Done!!")
+    console.log("Done!!");
   } catch (error) {
     console.log("error", error);
     throw error;
