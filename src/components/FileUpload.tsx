@@ -1,5 +1,5 @@
 "use client";
-import { uploadToStorj } from "@/lib/s3";
+import { uploadToS3 } from "@/lib/s3";
 import { useMutation } from "@tanstack/react-query";
 import { Inbox, Loader2 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
@@ -39,7 +39,7 @@ const FileUpload = () => {
 
       try {
         setUploading(true);
-        const data = await uploadToStorj(file);
+        const data = await uploadToS3(file);
         if (!data?.file_key || !data.file_name) {
           toast.error("Something went wrong");
           return;

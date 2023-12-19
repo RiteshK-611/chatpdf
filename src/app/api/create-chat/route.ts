@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { chats } from "@/lib/db/schema";
 import { embedAndStorePDF } from "@/lib/pinecone-new";
-import { getStorjUrl } from "@/lib/s3";
+import { getS3Url } from "@/lib/s3";
 import { auth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
@@ -22,7 +22,7 @@ export const POST = async (req: Request, res: Response) => {
       .values({
         fileKey: file_key,
         pdfName: file_name,
-        pdfUrl: getStorjUrl(file_key),
+        pdfUrl: getS3Url(file_key),
         userId,
       })
       .returning({

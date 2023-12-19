@@ -1,6 +1,6 @@
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { downlondFromStorj } from "./s3-server";
+import { downlondFromS3 } from "./s3-server";
 import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
 import md5 from "md5";
 import { getEmbeddings } from "./embedding";
@@ -8,7 +8,7 @@ import { getEmbeddings } from "./embedding";
 export const embedAndStorePDF = async (file_key: string) => {
   // 1. obtain the pdf -> download and read from pdf
   console.log("downloading pdf into file system...");
-  const file_name = await downlondFromStorj(file_key);
+  const file_name = await downlondFromS3(file_key);
 
   if (!file_name) {
     throw new Error("could not download pdf");
