@@ -1,5 +1,5 @@
 import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
-import { downlondFromStorj } from "./s3-server";
+import { downlondFromS3 } from "./s3-server";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import {
   Document,
@@ -24,7 +24,7 @@ type PDFPage = {
 export const loadPDFIntoPinecone = async (file_key: string) => {
   // 1. obtain the pdf -> download and read from pdf
   console.log("downloading pdf into file system...");
-  const file_name = await downlondFromStorj(file_key);
+  const file_name = await downlondFromS3(file_key);
 
   if (!file_name) {
     throw new Error("could not download pdf");
