@@ -7,12 +7,6 @@ import {
 } from "@pinecone-database/doc-splitter";
 import { getEmbeddings } from "./embedding";
 import md5 from "md5";
-import { convertToAscii } from "./utils";
-
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!,
-  environment: process.env.PINECONE_ENVIRONMENT!,
-});
 
 type PDFPage = {
   pageContent: string;
@@ -33,57 +27,46 @@ export const loadPDFIntoPinecone = async (file_key: string) => {
   const loader = new PDFLoader(file_name);
   const pages = (await loader.load()) as PDFPage[];
 
-  // 2. split and segment the pages
-  // const documents = await Promise.all(pages.map(page => prepareDocuments(page)));
-  const documents = await Promise.all(pages.map(prepareDocuments));
+  // 2. split and segment the pdf
+  const documents = await Promise.all(pages.map(prepareDocument));
 
-  console.log("Documents: " + documents);
-
-  // 3. vectorize and embed individual documents
-  const vectors = await Promise.all(documents.flat().map(embedDocument));
-
-  console.log("Vectors: " + vectors);
+  // 3. vectorise and embed individual documents
+  const vectors = await Promise.all(
+    documents.flat().map((doc) => embedDocument(doc, file_key))
+  );
 
   // 4. upload to pinecone
-  const pineconeIndex = pinecone.index("chatpdf");
-  // const namespace = pineconeIndex.namespace(convertToAscii(file_key));
-
-  // await PineconeStore.fromDocuments(documents)
-
-  console.log("inserting vectors into pinecone");
-  await pineconeIndex.upsert(vectors);
-  // await namespace.upsert(vectors);
-
-  return documents[0];
+  await uploadVec(vectors);
 };
 
-const embedDocument = async (doc: Document) => {
+async function embedDocument(doc: Document, file_key: string) {
   try {
-    const embedding = await getEmbeddings([doc.pageContent]);
-    const hash = md5(embedding[0]);
+    const embeddings = await getEmbeddings(doc.pageContent);
+    console.log(embeddings.length, "Embeddings created");
+    const hash = md5(doc.pageContent);
 
     return {
       id: hash,
-      values: embedding[0],
+      values: embeddings,
       metadata: {
         text: doc.metadata.text,
-        pageNumber: doc.metadata.pageNumber,
+        pdfKey: file_key,
       },
     } as PineconeRecord;
   } catch (error) {
-    console.error("error embedding document", error);
+    console.log("error embedding document", error);
     throw error;
   }
-};
+}
 
-const truncateStringByBytes = (str: string, bytes: number) => {
+export const truncateStringByBytes = (str: string, bytes: number) => {
   const enc = new TextEncoder();
   return new TextDecoder("utf-8").decode(enc.encode(str).slice(0, bytes));
 };
 
-const prepareDocuments = async (page: PDFPage) => {
+const prepareDocument = async (page: PDFPage) => {
   let { pageContent, metadata } = page;
-  pageContent = pageContent.replace("/\n/g", "");
+  pageContent = pageContent.replace(/\n/g, " ");
   // split the docs
   const splitter = new RecursiveCharacterTextSplitter();
   const docs = await splitter.splitDocuments([
@@ -95,6 +78,23 @@ const prepareDocuments = async (page: PDFPage) => {
       },
     }),
   ]);
-
   return docs;
+};
+
+const uploadVec = async (vectors: PineconeRecord[]) => {
+  try {
+    console.log("Init Pinecone");
+    const pinecone = new Pinecone({
+      apiKey: process.env.PINECONE_API_KEY!,
+      environment: process.env.PINECONE_ENVIRONMENT!,
+    });
+    const index = pinecone.Index("chatpdf-google");
+
+    console.log("Upserting into Pinecone");
+    await index?.upsert(vectors);
+    console.log("Done Upserting!!");
+  } catch (error) {
+    console.log("error", error);
+    throw error;
+  }
 };
